@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{ include "fullname" . }}-agent"
+  annotations:
+    helm.sh/created: "{{ .Release.Time.Seconds }}"
+  labels:
+    app: "{{ include "fullname" . }}"
+    component: "{{ include "fullname" . }}-agent"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: {{ .Values.agent.replicas }}
+  template:
+    metadata:
+      name: "{{ include "fullname" . }}-agent"
+      annotations:
+        helm.sh/created: "{{ .Release.Time.Seconds }}"
+      labels:
+        app: "{{ include "fullname" . }}"
+        component: "{{ include "fullname" . }}-agent"
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+    spec:
+      containers:
+      - name: {{ include "fullname" . }}-agent
+        image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag }}"
+        args:
+        - "agent"
+        imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
+        env:
+          - name: DOCKER_API_VERSION
+            value: "{{ .Values.docker.apiVersion }}"
+          - name: DRONE_SERVER
+            value: "{{ include "fullname" . }}-server:{{ .Values.service.grpc.externalPort }}"
+          - name: DRONE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: "{{ include "fullname" . }}-secrets"
+                key: secret
+          {{- range $key, $value := .Values.agent.env }}
+          {{- if ne $key "DRONE_SECRET" }}
+          - name: {{ $key }}
+            value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+        resources:
+{{ toYaml .Values.agent.resources | indent 10 }}
+        volumeMounts:
+          # Enables Docker in Docker
+          - mountPath: /var/run/docker.sock
+            name: docker-socket
+      volumes:
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock

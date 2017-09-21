@@ -1,0 +1,83 @@
+## Drone default values
+##
+
+service:
+  http:
+    externalPort: 80
+    internalPort: 8000
+  grpc:
+    externalPort: 9000
+    internalPort: 9000
+  type: LoadBalancer
+
+## Kubernetes by default uses an older version of Docker (v1.11.2, API version 1.23)
+##
+docker:
+  apiVersion: 1.23
+
+server:
+  replicas: 1
+
+  ## Drone server image
+  ## ref: https://hub.docker.com/r/drone/drone
+  ##
+  image:
+    repository: drone/drone
+    tag: 0.8
+    pullPolicy: Always
+
+  ## Drone server configuration. Values in here get injected as environment variables.
+  ## ref: http://readme.drone.io/admin/installation-reference/#server-options
+  ##      http://docs.drone.io/environment-reference/
+  ##
+  env:
+    #DRONE_ADMIN: "" # Comma-separated list of admin users
+    #DRONE_ORGS: "" # Comma-separated list of authorized organizations
+    #DRONE_OPEN: "" # Set to true if registration is open
+    #DRONE_DEBUG: "" # Set to true to see verbose debugging log output
+    DRONE_DATABASE_DRIVER: sqlite3 # sqlite, mysql or postgres db driver
+    DRONE_DATABASE_DATASOURCE: drone.sqlite # db connection string
+    DRONE_YAML: .drone.yml
+    DRONE_CACHE_TTY: 15m
+    DRONE_HOST: "" # Drone Host Address, e.g. https://ci.your-company.com
+    DRONE_SECRET: "" # Random Secure Token. Use e.g. `openssl rand -base64 32` to generate one
+    #DRONE_GITHUB: true
+    #DRONE_GITHUB_URL: https://github.com
+    #DRONE_GITHUB_CLIENT: "" # OAuth Client ID
+    #DRONE_GITHUB_SECRET: "" # OAuth Client Secret
+    #DRONE_GITHUB_SCOPE: repo,repo:status,user:email,read:org
+    #DRONE_GITHUB_GIT_USERNAME: "" # Robot account username
+    #DRONE_GITHUB_GIT_PASSWORD: "" # Robot account password
+  resources:
+    requests:
+      memory: 32Mi
+      cpu: 40m
+    limits:
+      memory: 2Gi
+      cpu: 1
+
+agent:
+  replicas: 3
+
+  ## Drone agent image
+  ## ref: https://hub.docker.com/r/drone/agent
+  ##
+  image:
+    repository: drone/agent
+    tag: 0.8
+    pullPolicy: Always
+
+  ## Drone agent configuration. Values in here get injected as environment variables.
+  ## ref: http://readme.drone.io/admin/installation-reference#agent-options
+  ##
+  env:
+    #DRONE_DEBUG: "" # Set to true to see verbose debugging log output
+    DRONE_PLUGIN_PULL: false # If true, plugin updates are pulled automatically
+    DRONE_PLUGIN_PRIVILEGED: "" # Comma-separated list of plugins (images) automatically granted privileged mode
+  resources:
+    requests:
+      memory: 32Mi
+      cpu: 40m
+    limits:
+      memory: 2Gi
+      cpu: 1

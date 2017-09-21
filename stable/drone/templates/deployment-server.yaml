@@ -1,0 +1,63 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{ include "fullname" . }}-server"
+  annotations:
+    helm.sh/created: "{{ .Release.Time.Seconds }}"
+  labels:
+    app: "{{ include "fullname" . }}"
+    component: "{{ include "fullname" . }}-server"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: {{ .Values.server.replicas }}
+  template:
+    metadata:
+      name: "{{ include "fullname" . }}-server"
+      annotations:
+        helm.sh/created: "{{ .Release.Time.Seconds }}"
+      labels:
+        app: "{{ include "fullname" . }}"
+        component: "{{ include "fullname" . }}-server"
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+    spec:
+      containers:
+      - name: {{ include "fullname" . }}-server
+        image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
+        imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+        env:
+          - name: DOCKER_API_VERSION
+            value: "{{ .Values.docker.apiVersion }}"
+          - name: DRONE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: "{{ include "fullname" . }}-secrets"
+                key: secret
+          {{- range $key, $value := .Values.server.env }}
+          {{- if ne $key "DRONE_SECRET" }}
+          - name: {{ $key }}
+            value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.http.internalPort }}
+        - name: grpc
+          containerPort: {{ .Values.service.grpc.internalPort }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+        resources:
+{{ toYaml .Values.server.resources | indent 10 }}

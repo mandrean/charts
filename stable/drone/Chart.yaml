@@ -1,0 +1,17 @@
+name: drone
+version: 0.1.0
+description: Drone is a lightweight, powerful continuous delivery platform built on Docker, written in Go.
+icon: https://drone.io/static/images/logo.svg
+keywords:
+- continuous-deployment
+- continuous-integration
+- docker
+- drone
+- drone.io
+- go
+sources:
+- http://docs.drone.io
+maintainers:
+- name: Sebastian Mandrean
+  email: sebastian.mandrean@gmail.com
+engine: gotpl
